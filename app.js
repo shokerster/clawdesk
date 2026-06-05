@@ -17,6 +17,7 @@ let latestSkills = null;
 let latestCron = null;
 let currentSessionKey = DEFAULT_SESSION_KEY;
 let pendingRenameSessionKey = DEFAULT_SESSION_KEY;
+let pendingAttachments = [];
 
 function $(selector) {
   return document.querySelector(selector);
@@ -74,6 +75,14 @@ function prettyDate(value) {
   const date = Number.isFinite(number) ? new Date(number) : new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleString();
+}
+
+function formatBytes(bytes) {
+  const value = Number(bytes);
+  if (!Number.isFinite(value) || value < 0) return '';
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(value < 10 * 1024 * 1024 ? 1 : 0)} MB`;
 }
 
 function compactNodeName(value) {
@@ -384,6 +393,31 @@ function appendMessage(role, text, detail = '') {
   scrollChatToBottom();
   saveChat();
   return message;
+}
+
+function attachmentDetail(attachments = []) {
+  const usable = attachments.filter((attachment) => attachment?.ok !== false && attachment.path);
+  if (!usable.length) return '';
+  return `Attached: ${usable.map((attachment) => attachment.name || attachment.path.split('/').pop()).join(', ')}`;
+}
+
+function renderAttachmentTray() {
+  const tray = $('#attachmentTray');
+  if (!tray) return;
+  const usable = pendingAttachments.filter((attachment) => attachment?.ok !== false && attachment.path);
+  tray.hidden = usable.length === 0;
+  tray.innerHTML = usable.map((attachment, index) => `
+    <button class="attachment-chip" type="button" data-remove-attachment="${index}" title="${escapeAttr(attachment.path)}">
+      <span>${escapeHtml(attachment.name || attachment.path.split('/').pop())}</span>
+      <small>${escapeHtml(formatBytes(attachment.size))}</small>
+      <strong aria-hidden="true">×</strong>
+    </button>
+  `).join('');
+}
+
+function clearAttachments() {
+  pendingAttachments = [];
+  renderAttachmentTray();
 }
 
 function loadChat() {
@@ -859,6 +893,36 @@ on('#openControlUi', 'click', async () => {
   log('Opened local OpenClaw control UI');
 });
 
+on('#attachFiles', 'click', async () => {
+  const button = $('#attachFiles');
+  button.disabled = true;
+  try {
+    const result = await window.clawdesk.chooseAttachments();
+    const accepted = (result.attachments || []).filter((attachment) => attachment.ok !== false && attachment.path);
+    const rejected = (result.attachments || []).filter((attachment) => attachment.ok === false);
+    pendingAttachments = [...pendingAttachments, ...accepted].slice(0, 10);
+    renderAttachmentTray();
+    if (accepted.length) log(`Attached ${accepted.length} file${accepted.length === 1 ? '' : 's'} to chat`);
+    rejected.forEach((attachment) => log(`Attachment skipped: ${attachment.name || attachment.path} (${attachment.error || 'unsupported file'})`));
+    $('#chatInput')?.focus();
+  } catch (error) {
+    log(`Attachment picker failed: ${error.message}`);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+on('#attachmentTray', 'click', (event) => {
+  const removeButton = event.target.closest('[data-remove-attachment]');
+  if (!removeButton) return;
+  const index = Number(removeButton.dataset.removeAttachment);
+  const usable = pendingAttachments.filter((attachment) => attachment?.ok !== false && attachment.path);
+  const removed = usable[index];
+  pendingAttachments = pendingAttachments.filter((attachment) => attachment !== removed);
+  renderAttachmentTray();
+  if (removed) log(`Removed attachment ${removed.name || removed.path}`);
+});
+
 document.querySelectorAll('[data-action]').forEach((button) => {
   button.addEventListener('click', async () => {
     button.disabled = true;
@@ -876,10 +940,13 @@ $('#composer').addEventListener('submit', async (event) => {
   const thinking = $('#thinkingSelect').value;
   const sendButton = $('#sendButton');
   const text = input.value.trim();
-  if (!text) return;
+  const attachments = pendingAttachments.filter((attachment) => attachment?.ok !== false && attachment.path);
+  if (!text && !attachments.length) return;
+  const outgoingText = text || 'Please review the attached file(s).';
 
-  appendMessage('user', text);
+  appendMessage('user', outgoingText, attachmentDetail(attachments));
   input.value = '';
+  clearAttachments();
   input.disabled = true;
   sendButton.disabled = true;
   sendButton.textContent = 'Working';
@@ -887,7 +954,8 @@ $('#composer').addEventListener('submit', async (event) => {
 
   try {
     const reply = await window.clawdesk.sendMessage({
-      message: text,
+      message: outgoingText,
+      attachments,
       sessionKey: currentSessionKey,
       agent: 'main',
       thinking

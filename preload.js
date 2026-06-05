@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('clawdesk', {
   getLogs: () => ipcRenderer.invoke('openclaw:logs'),
   getSystem: () => ipcRenderer.invoke('app:system'),
   sendMessage: (payload) => ipcRenderer.invoke('openclaw:send-message', payload),
+  chooseAttachments: () => ipcRenderer.invoke('openclaw:choose-attachments'),
   listSessions: () => ipcRenderer.invoke('openclaw:sessions'),
   openControlUi: () => ipcRenderer.invoke('openclaw:open-control-ui'),
   openPath: (targetPath) => ipcRenderer.invoke('openclaw:open-path', targetPath),

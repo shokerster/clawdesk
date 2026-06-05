@@ -41,13 +41,13 @@ git log --oneline --format='%h %an <%ae> %s' -1
 Tag:
 
 ```text
-v0.1.0
+v0.1.1
 ```
 
 Release title:
 
 ```text
-ClawDesk v0.1.0
+ClawDesk v0.1.1
 ```
 
 Release notes:
@@ -59,12 +59,12 @@ Use `RELEASE_NOTES.md`.
 Upload these files from `release/`:
 
 ```text
-ClawDesk-0.1.0-universal.dmg
-ClawDesk-0.1.0-universal-mac.zip
-ClawDesk Setup 0.1.0.exe
-ClawDesk 0.1.0.exe
-ClawDesk-0.1.0.AppImage
-clawdesk-0.1.0.tar.gz
+ClawDesk-0.1.1-universal.dmg
+ClawDesk-0.1.1-universal-mac.zip
+ClawDesk Setup 0.1.1.exe
+ClawDesk 0.1.1.exe
+ClawDesk-0.1.1.AppImage
+clawdesk-0.1.1.tar.gz
 SHASUMS256.txt
 ```
 
@@ -85,15 +85,15 @@ If `gh` is installed and authenticated:
 ```bash
 cd /Users/shokerster/.openclaw/workspace/business/ideas/clawdesk/app
 gh repo create clawdesk --public --source=. --remote=origin --push
-gh release create v0.1.0 \
-  --title "ClawDesk v0.1.0" \
+gh release create v0.1.1 \
+  --title "ClawDesk v0.1.1" \
   --notes-file RELEASE_NOTES.md \
-  "release/ClawDesk-0.1.0-universal.dmg" \
-  "release/ClawDesk-0.1.0-universal-mac.zip" \
-  "release/ClawDesk Setup 0.1.0.exe" \
-  "release/ClawDesk 0.1.0.exe" \
-  "release/ClawDesk-0.1.0.AppImage" \
-  "release/clawdesk-0.1.0.tar.gz" \
+  "release/ClawDesk-0.1.1-universal.dmg" \
+  "release/ClawDesk-0.1.1-universal-mac.zip" \
+  "release/ClawDesk Setup 0.1.1.exe" \
+  "release/ClawDesk 0.1.1.exe" \
+  "release/ClawDesk-0.1.1.AppImage" \
+  "release/clawdesk-0.1.1.tar.gz" \
   "release/SHASUMS256.txt"
 ```
 

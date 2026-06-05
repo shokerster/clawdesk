@@ -761,6 +761,54 @@ small {
   background: var(--thread-bg);
 }
 
+.attachment-tray {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.attachment-tray[hidden] {
+  display: none;
+}
+
+.attachment-chip {
+  display: inline-grid;
+  grid-template-columns: minmax(0, auto) auto auto;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.attachment-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-chip small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.attachment-chip strong {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.attach-button {
+  font-size: 22px;
+  font-weight: 650;
+}
+
 .composer input,
 .composer select {
   min-width: 0;

@@ -15,6 +15,7 @@ ClawDesk gives OpenClaw users a cross-platform Electron app for chat, gateway he
 ## Features
 
 - Chat through the local `openclaw agent` CLI.
+- Attach files in chat with the `+` button. ClawDesk saves them into the OpenClaw workspace and gives the agent the local paths.
 - View Gateway status, health, node presence, and log tail.
 - Inspect recent sessions, configured agents, workspace memory files, skills, and cron jobs.
 - Review local usage estimates from `openclaw gateway usage-cost`.
@@ -32,11 +33,11 @@ ClawDesk gives OpenClaw users a cross-platform Electron app for chat, gateway he
 
 Download the artifact for your platform from the GitHub release:
 
-- macOS: `ClawDesk-0.1.0-universal.dmg`
-- Windows installer: `ClawDesk.Setup.0.1.0.exe`
-- Windows portable: `ClawDesk.0.1.0.exe`
-- Linux AppImage: `ClawDesk-0.1.0.AppImage`
-- Linux archive: `clawdesk-0.1.0.tar.gz`
+- macOS: `ClawDesk-0.1.1-universal.dmg`
+- Windows installer: `ClawDesk.Setup.0.1.1.exe`
+- Windows portable: `ClawDesk.0.1.1.exe`
+- Linux AppImage: `ClawDesk-0.1.1.AppImage`
+- Linux archive: `clawdesk-0.1.1.tar.gz`
 
 The current builds are unsigned. macOS and Windows may show security warnings on first launch.
 

@@ -1,11 +1,12 @@
-# ClawDesk v0.1.0
+# ClawDesk v0.1.1
 
-Initial local desktop release for OpenClaw users.
+Attachment-enabled local desktop release for OpenClaw users.
 
 ## Includes
 
 - Electron desktop app for macOS, Windows, and Linux.
 - Local OpenClaw chat through `openclaw agent`.
+- Native chat file attachments: the `+` button opens a file picker, copies selected files into the OpenClaw workspace, and sends those paths to the agent.
 - Local session renaming for clearer conversation history.
 - Dashboard for Gateway health, sessions, skills, cron jobs, channels, and usage.
 - Agents, sessions, memory, usage, crons, logs, settings, and about views.
@@ -14,12 +15,12 @@ Initial local desktop release for OpenClaw users.
 
 ## Release Assets
 
-- `ClawDesk-0.1.0-universal.dmg` - macOS universal installer
-- `ClawDesk-0.1.0-universal-mac.zip` - macOS universal zip
-- `ClawDesk.Setup.0.1.0.exe` - Windows installer
-- `ClawDesk.0.1.0.exe` - Windows portable app
-- `ClawDesk-0.1.0.AppImage` - Linux AppImage
-- `clawdesk-0.1.0.tar.gz` - Linux archive
+- `ClawDesk-0.1.1-universal.dmg` - macOS universal installer
+- `ClawDesk-0.1.1-universal-mac.zip` - macOS universal zip
+- `ClawDesk.Setup.0.1.1.exe` - Windows installer
+- `ClawDesk.0.1.1.exe` - Windows portable app
+- `ClawDesk-0.1.1.AppImage` - Linux AppImage
+- `clawdesk-0.1.1.tar.gz` - Linux archive
 - `SHASUMS256.txt` - SHA-256 checksums
 
 ## Known Limits

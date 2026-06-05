@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const { execFile } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -36,6 +36,69 @@ async function getWorkspaceDir() {
   const result = await runShell(openclawPath, ['config', 'get', 'agents', '--json'], { timeout: 12000, maxBuffer: 1024 * 1024 * 10 });
   const parsed = extractJson(result.stdout || result.stderr || result.message);
   return parsed?.defaults?.workspace || DEFAULT_WORKSPACE_DIR;
+}
+
+function safeFileName(name) {
+  const parsed = path.parse(String(name || 'attachment'));
+  const base = parsed.name.replace(/[^a-z0-9._-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'attachment';
+  const ext = parsed.ext.replace(/[^a-z0-9.]+/gi, '').slice(0, 24);
+  return `${base}${ext}`;
+}
+
+async function copyChatAttachments(filePaths = []) {
+  const workspaceDir = await getWorkspaceDir();
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const attachmentDir = path.join(workspaceDir, 'attachments', 'clawdesk', stamp);
+  await fs.promises.mkdir(attachmentDir, { recursive: true });
+
+  const attachments = [];
+  for (const filePath of filePaths.slice(0, 10)) {
+    const sourcePath = path.resolve(String(filePath || ''));
+    const stats = await fs.promises.stat(sourcePath).catch(() => null);
+    if (!stats?.isFile()) continue;
+    if (stats.size > 50 * 1024 * 1024) {
+      attachments.push({
+        ok: false,
+        name: path.basename(sourcePath),
+        path: sourcePath,
+        error: 'File is larger than 50 MB.'
+      });
+      continue;
+    }
+
+    const fileName = safeFileName(path.basename(sourcePath));
+    let destination = path.join(attachmentDir, fileName);
+    let suffix = 2;
+    while (fs.existsSync(destination)) {
+      const parsed = path.parse(fileName);
+      destination = path.join(attachmentDir, `${parsed.name}-${suffix}${parsed.ext}`);
+      suffix += 1;
+    }
+    await fs.promises.copyFile(sourcePath, destination);
+    attachments.push({
+      ok: true,
+      name: path.basename(sourcePath),
+      path: destination,
+      size: stats.size
+    });
+  }
+  return attachments;
+}
+
+async function chooseChatAttachments(browserWindow) {
+  const result = await dialog.showOpenDialog(browserWindow, {
+    title: 'Attach files to ClawDesk chat',
+    properties: ['openFile', 'multiSelections']
+  });
+  if (result.canceled || result.filePaths.length === 0) {
+    return { ok: true, attachments: [] };
+  }
+  const attachments = await copyChatAttachments(result.filePaths);
+  return {
+    ok: true,
+    attachments,
+    rejected: attachments.filter((attachment) => !attachment.ok).length
+  };
 }
 
 function extractJson(text) {
@@ -247,11 +310,19 @@ async function setDefaultModel(model) {
   };
 }
 
-async function sendAgentMessage({ message, sessionKey = 'agent:main:clawdesk', agent = 'main', thinking = 'medium' }) {
+function formatAttachmentContext(attachments = []) {
+  const usable = attachments.filter((attachment) => attachment?.ok !== false && attachment.path);
+  if (!usable.length) return '';
+  const lines = usable.map((attachment) => `- ${attachment.name || path.basename(attachment.path)}: ${attachment.path}`);
+  return `\n\nAttached files saved locally for this turn:\n${lines.join('\n')}\n\nUse the file paths above when you need to inspect the attachments.`;
+}
+
+async function sendAgentMessage({ message, attachments = [], sessionKey = 'agent:main:clawdesk', agent = 'main', thinking = 'medium' }) {
   const openclawPath = await resolveOpenClawPath();
   if (!openclawPath) {
     return { ok: false, text: 'OpenClaw is not installed or not on this Mac.', raw: '' };
   }
+  const finalMessage = `${String(message || '').trim()}${formatAttachmentContext(attachments)}`.trim();
   const result = await runShell(openclawPath, [
     'agent',
     '--agent',
@@ -259,7 +330,7 @@ async function sendAgentMessage({ message, sessionKey = 'agent:main:clawdesk', a
     '--session-key',
     sessionKey,
     '--message',
-    message,
+    finalMessage,
     '--thinking',
     thinking,
     '--json',
@@ -394,6 +465,7 @@ app.whenReady().then(() => {
   ipcMain.handle('openclaw:memory', listMemoryFiles);
   ipcMain.handle('openclaw:logs', readGatewayLog);
   ipcMain.handle('openclaw:send-message', async (_event, payload) => sendAgentMessage(payload));
+  ipcMain.handle('openclaw:choose-attachments', async (event) => chooseChatAttachments(BrowserWindow.fromWebContents(event.sender)));
   ipcMain.handle('openclaw:sessions', listSessions);
   ipcMain.handle('openclaw:open-path', async (_event, targetPath) => {
     if (!targetPath) return { ok: false };
