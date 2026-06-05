@@ -58,6 +58,13 @@ function log(message) {
   if (logOutput) logOutput.textContent = `${line}\n${logOutput.textContent || ''}`.slice(0, 20000);
 }
 
+function refreshAfterChatReply() {
+  window.setTimeout(() => {
+    Promise.all([refreshUsage(), refreshSessions()])
+      .catch((error) => log(`Post-chat refresh failed: ${error.message}`));
+  }, 50);
+}
+
 function showView(name) {
   views.forEach((view) => view.classList.toggle('active', view.id === `view-${name}`));
   navItems.forEach((item) => item.classList.toggle('active', item.dataset.view === name));
@@ -1022,7 +1029,7 @@ $('#composer').addEventListener('submit', async (event) => {
     scrollChatToBottom();
     saveChat();
     log(`Chat reply received${reply.runId ? ` run ${reply.runId}` : ''}`);
-    await Promise.all([refreshUsage(), refreshSessions()]);
+    refreshAfterChatReply();
   } catch (error) {
     pending.querySelector('p').textContent = `OpenClaw chat failed: ${error.message}`;
     scrollChatToBottom();

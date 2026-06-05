@@ -16,6 +16,9 @@ const CLI_PATH_PREFIXES = [
   '/sbin'
 ];
 
+let cachedOpenClawPath = null;
+let openClawPathPromise = null;
+
 function buildCliEnv(extraEnv = {}) {
   const paths = [
     ...CLI_PATH_PREFIXES,
@@ -46,6 +49,18 @@ function runShell(command, args = [], options = {}) {
 }
 
 async function resolveOpenClawPath() {
+  if (cachedOpenClawPath && fs.existsSync(cachedOpenClawPath)) return cachedOpenClawPath;
+  if (openClawPathPromise) return openClawPathPromise;
+  openClawPathPromise = findOpenClawPath();
+  try {
+    cachedOpenClawPath = await openClawPathPromise;
+    return cachedOpenClawPath;
+  } finally {
+    openClawPathPromise = null;
+  }
+}
+
+async function findOpenClawPath() {
   const candidates = ['/opt/homebrew/bin/openclaw', '/usr/local/bin/openclaw'];
   const fromPath = await runShell('/bin/zsh', ['-lc', 'command -v openclaw']);
   if (fromPath.ok && fromPath.stdout) candidates.unshift(fromPath.stdout);
@@ -349,7 +364,7 @@ function formatAttachmentContext(attachments = []) {
   return `\n\nAttached files saved locally for this turn:\n${lines.join('\n')}\n\nUse the file paths above when you need to inspect the attachments.`;
 }
 
-async function sendAgentMessage({ message, attachments = [], sessionKey = 'agent:main:clawdesk', agent = 'main', thinking = 'medium' }) {
+async function sendAgentMessage({ message, attachments = [], sessionKey = 'agent:main:clawdesk', agent = 'main', thinking = 'low' }) {
   const openclawPath = await resolveOpenClawPath();
   if (!openclawPath) {
     return { ok: false, text: 'OpenClaw is not installed or not on this Mac.', raw: '' };
