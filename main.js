@@ -6,12 +6,34 @@ const path = require('node:path');
 
 const DEFAULT_GATEWAY_URL = 'http://127.0.0.1:18789';
 const DEFAULT_WORKSPACE_DIR = path.join(os.homedir(), '.openclaw', 'workspace');
+const CLI_PATH_PREFIXES = [
+  '/opt/homebrew/opt/node@22/bin',
+  '/opt/homebrew/bin',
+  '/usr/local/bin',
+  '/usr/bin',
+  '/bin',
+  '/usr/sbin',
+  '/sbin'
+];
+
+function buildCliEnv(extraEnv = {}) {
+  const paths = [
+    ...CLI_PATH_PREFIXES,
+    ...(process.env.PATH || '').split(path.delimiter).filter(Boolean)
+  ];
+  return {
+    ...process.env,
+    ...extraEnv,
+    PATH: [...new Set(paths)].join(path.delimiter)
+  };
+}
 
 function runShell(command, args = [], options = {}) {
   return new Promise((resolve) => {
     execFile(command, args, {
       timeout: options.timeout || 8000,
-      maxBuffer: options.maxBuffer || 1024 * 1024 * 8
+      maxBuffer: options.maxBuffer || 1024 * 1024 * 8,
+      env: buildCliEnv(options.env)
     }, (error, stdout, stderr) => {
       resolve({
         ok: !error,
