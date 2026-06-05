@@ -242,10 +242,20 @@ async function getAgentsConfig() {
   const result = await runShell(openclawPath, ['config', 'get', 'agents', '--json'], { timeout: 15000, maxBuffer: 1024 * 1024 * 10 });
   const parsed = extractJson(result.stdout || result.stderr || result.message);
   const workspace = parsed?.defaults?.workspace || DEFAULT_WORKSPACE_DIR;
+  const defaults = parsed?.defaults || {};
+  const agents = parsed?.list || [];
+  const models = new Set();
+  Object.keys(defaults.models || {}).forEach((model) => models.add(model));
+  if (defaults.model?.primary) models.add(defaults.model.primary);
+  agents.forEach((agent) => {
+    if (agent.model) models.add(agent.model);
+    Object.keys(agent.models || {}).forEach((model) => models.add(model));
+  });
   return {
     ok: result.ok && Boolean(parsed),
-    defaults: parsed?.defaults || {},
-    agents: parsed?.list || [],
+    defaults,
+    agents,
+    models: [...models].filter(Boolean).sort(),
     roles: readWorkspaceRoles(workspace),
     raw: result.stdout || result.stderr || result.message
   };

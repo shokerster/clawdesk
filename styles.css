@@ -635,17 +635,29 @@ small {
 
 .message {
   max-width: 620px;
+  min-width: 0;
   padding: 13px 15px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--message-bg);
   box-shadow: var(--shadow-soft);
+  overflow-wrap: anywhere;
 }
 
 .message p {
   margin: 0 0 8px;
   color: var(--chat-assistant-text);
   line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.message small {
+  display: block;
+  margin: -2px 0 8px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .message time {
@@ -1001,7 +1013,7 @@ dd {
 .dashboard-metrics {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(5, minmax(132px, 1fr));
+  grid-template-columns: repeat(6, minmax(118px, 1fr));
   gap: 12px;
 }
 
@@ -1069,6 +1081,10 @@ dd {
 
 .metric-tile:nth-child(5) {
   --tile-color: var(--accent);
+}
+
+.metric-tile:nth-child(6) {
+  --tile-color: var(--teal);
 }
 
 .metric-tile .danger-text,
@@ -1584,7 +1600,14 @@ th {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel-soft);
+  color: var(--text);
   padding: 0 12px;
+  font: inherit;
+}
+
+.model-form select option {
+  background: var(--panel);
+  color: var(--text);
 }
 
 .about-page {
@@ -1637,6 +1660,8 @@ th {
 
 pre {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;

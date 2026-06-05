@@ -202,6 +202,7 @@ function renderCronJobs(result) {
 
 function collectModelOptions(agentsConfig = latestAgents) {
   const models = new Set();
+  (agentsConfig?.models || []).forEach((model) => models.add(model));
   Object.keys(agentsConfig?.defaults?.models || {}).forEach((model) => models.add(model));
   if (agentsConfig?.defaults?.model?.primary) models.add(agentsConfig.defaults.model.primary);
   (agentsConfig?.agents || []).forEach((agent) => {
@@ -226,13 +227,16 @@ function renderModelSettings(agentsConfig = latestAgents) {
   if (!models.length) {
     const option = document.createElement('option');
     option.value = '';
-    option.textContent = 'No configured models';
+    option.textContent = agentsConfig.ok === false ? 'OpenClaw config unavailable' : 'No configured models';
     select.append(option);
   } else if (current && !models.includes(current)) {
     select.prepend(Object.assign(document.createElement('option'), { value: current, textContent: current }));
   }
   select.value = current || models[0] || '';
   setText('#modelCurrentBadge', current ? current.replace(/^openai\//, '') : 'Not set');
+  setText('#modelSaveStatus', models.length
+    ? `${models.length} configured model${models.length === 1 ? '' : 's'} available. Changes apply to new OpenClaw runs.`
+    : (agentsConfig.raw || 'No models were returned by OpenClaw config.'));
   const customInput = $('#modelCustomInput');
   if (customInput && !customInput.value) customInput.placeholder = current || 'provider/model';
 }
@@ -451,13 +455,16 @@ async function refreshStatus() {
   const status = await window.clawdesk.getStatus();
   latestStatus = status;
   const installedText = status.installed ? 'Installed' : 'Missing';
+  const openClawVersion = status.version && status.version !== 'Unknown' ? `v${status.version}` : 'Version unknown';
   const gatewayText = status.gatewayOnline ? 'Online' : 'Offline';
 
-  setText('#openclawState', installedText);
+  setText('#openclawState', status.installed ? `${installedText} · ${openClawVersion}` : installedText);
   setText('#gatewayState', gatewayText);
   setText('#versionState', status.version || 'Unknown');
   setText('#sidebarHealth', status.installed && status.gatewayOnline ? 'System healthy' : 'Needs attention');
   setText('#sidebarPath', status.path);
+  setText('#dashboardOpenClawVersion', status.installed ? openClawVersion : 'Missing');
+  setText('#dashboardOpenClawVersionDetail', status.path || 'OpenClaw CLI not found');
   setText('#dashboardGateway', gatewayText);
   setText('#dashboardEndpoint', status.gatewayUrl);
   setText('#gatewayLogPath', status.logPath || 'No log path found');
@@ -748,7 +755,7 @@ async function refreshSettings() {
   const [status, system, agents] = await Promise.all([
     latestStatus ? Promise.resolve(latestStatus) : window.clawdesk.getStatus(),
     window.clawdesk.getSystem(),
-    latestAgents ? Promise.resolve(latestAgents) : window.clawdesk.getAgents()
+    window.clawdesk.getAgents()
   ]);
   latestSystem = system;
   latestAgents = agents;
