@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="112" fill="#0F172A"/>
+  <rect x="34" y="34" width="444" height="444" rx="96" fill="url(#tile)"/>
+  <rect x="112" y="136" width="288" height="208" rx="32" fill="#F8FBFF"/>
+  <rect x="136" y="168" width="240" height="128" rx="18" fill="#0F172A"/>
+  <path d="M224 350H288" stroke="#0F172A" stroke-width="28" stroke-linecap="round"/>
+  <path d="M188 382H324" stroke="#0F172A" stroke-width="28" stroke-linecap="round"/>
+  <path d="M309 149C271 127 219 130 183 162C143 198 136 259 168 303C198 344 254 359 301 336" stroke="#6B7280" stroke-width="34" stroke-linecap="round"/>
+  <path d="M310 198L365 157" stroke="#6B7280" stroke-width="32" stroke-linecap="round"/>
+  <path d="M318 242L385 242" stroke="#6B7280" stroke-width="32" stroke-linecap="round"/>
+  <path d="M310 286L365 327" stroke="#6B7280" stroke-width="32" stroke-linecap="round"/>
+  <path d="M195 248C195 211 225 181 263 181H307" stroke="#D1D5DB" stroke-width="24" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="tile" x1="96" y1="64" x2="420" y2="452" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9FAFB"/>
+      <stop offset="0.46" stop-color="#D1D5DB"/>
+      <stop offset="1" stop-color="#6B7280"/>
+    </linearGradient>
+  </defs>
+</svg>

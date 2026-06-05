@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClawDesk</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img class="brand-mark" src="assets/clawdesk-logo.svg" alt="" />
+          <div class="brand-copy">
+            <strong>ClawDesk</strong>
+            <span>v0.1 local</span>
+          </div>
+          <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Collapse menu" title="Collapse menu">
+            <span aria-hidden="true">‹</span>
+          </button>
+        </div>
+
+        <nav class="nav" aria-label="Main">
+          <button class="nav-item" data-view="dashboard" title="Dashboard"><span class="nav-icon" aria-hidden="true">⌂</span><span class="nav-label">Dashboard</span></button>
+          <button class="nav-item active" data-view="chat" title="Chat"><span class="nav-icon" aria-hidden="true">◌</span><span class="nav-label">Chat</span></button>
+          <button class="nav-item" data-view="agents" title="Agents"><span class="nav-icon" aria-hidden="true">◎</span><span class="nav-label">Agents</span></button>
+          <button class="nav-item" data-view="sessions" title="Sessions"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-label">Sessions</span></button>
+          <button class="nav-item" data-view="memory" title="Memory"><span class="nav-icon" aria-hidden="true">◇</span><span class="nav-label">Memory</span></button>
+          <button class="nav-item" data-view="usage" title="Usage"><span class="nav-icon" aria-hidden="true">▥</span><span class="nav-label">Usage</span></button>
+          <button class="nav-item" data-view="crons" title="Crons"><span class="nav-icon" aria-hidden="true">◷</span><span class="nav-label">Crons</span></button>
+          <button class="nav-item" data-view="logs" title="Logs"><span class="nav-icon" aria-hidden="true">☰</span><span class="nav-label">Logs</span></button>
+          <button class="nav-item" data-view="about" title="About"><span class="nav-icon" aria-hidden="true">ⓘ</span><span class="nav-label">About</span></button>
+          <button class="nav-item" data-view="settings" title="Settings"><span class="nav-icon" aria-hidden="true">⚙</span><span class="nav-label">Settings</span></button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="health-line"><span class="dot" id="sidebarDot"></span><strong id="sidebarHealth">Checking</strong></div>
+          <span id="sidebarPath">OpenClaw status pending</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="status-pill"><span class="dot" id="openclawDot"></span><strong>OpenClaw</strong><small id="openclawState">Checking</small></div>
+          <div class="status-pill"><span class="dot" id="gatewayDot"></span><strong>Local Gateway</strong><small id="gatewayState">Checking</small></div>
+          <div class="status-pill"><span class="dot" id="modelDot"></span><strong>Model</strong><small id="versionState">Checking</small></div>
+          <div class="status-pill"><span class="shield">✓</span><strong>Approval Mode</strong><small id="approvalState">No live queue</small></div>
+          <div class="status-pill money"><span id="topUsageLabel">Tokens seen</span><strong id="topUsageCost">--</strong></div>
+          <button class="theme-toggle" id="themeToggle" type="button" title="Switch color theme">Dark</button>
+          <button class="icon-button" id="refreshAll" title="Refresh everything">Refresh</button>
+        </header>
+
+        <section class="view active" id="view-chat">
+          <div class="chat-layout">
+            <section class="thread">
+              <div class="thread-header">
+                <div class="avatar">A</div>
+                <div>
+                  <strong>Agent</strong>
+                  <span><span class="dot" id="threadDot"></span> <span id="threadStatus">Checking OpenClaw</span></span>
+                </div>
+                <div class="conversation-picker">
+                  <select class="conversation-select" id="conversationSelect" aria-label="Conversation">
+                    <option>Loading conversations...</option>
+                  </select>
+                  <button class="rename-session-button" id="renameSessionButton" type="button" title="Rename selected session">Rename session</button>
+                  <button class="new-session-button" id="newSessionButton" type="button" title="Start new session">New session</button>
+                </div>
+                <time id="threadClock">--:--</time>
+              </div>
+
+              <div class="messages" id="messages">
+                <article class="message assistant-message">
+                  <p>This chat sends real messages through the local OpenClaw CLI into a ClawDesk session.</p>
+                  <div class="task-card compact-task">
+                    <div class="task-card-head">
+                      <strong>ClawDesk local client</strong>
+                      <span>Live</span>
+                    </div>
+                    <ul>
+                      <li class="done">Gateway status connected</li>
+                      <li class="done">Usage, sessions, logs wired</li>
+                      <li class="done">Chat sends to OpenClaw</li>
+                      <li>Native approval queue pending</li>
+                    </ul>
+                  </div>
+                  <time>Ready</time>
+                </article>
+              </div>
+
+              <form class="composer" id="composer">
+                <button type="button" class="attach-button" id="openWorkspace">+</button>
+                <input id="chatInput" placeholder="Message your OpenClaw agent..." />
+                <select id="thinkingSelect" aria-label="Thinking level">
+                  <option value="medium">medium</option>
+                  <option value="low">low</option>
+                  <option value="high">high</option>
+                </select>
+                <button class="send-button" id="sendButton" type="submit">Send</button>
+              </form>
+            </section>
+
+            <aside class="inspector">
+              <div class="panel">
+                <div class="panel-title"><strong>Current Context</strong></div>
+                <div class="meter"><span id="contextMeter" style="width: 0%"></span></div>
+                <dl>
+                  <div><dt>Memory used</dt><dd id="contextTokens">Checking</dd></div>
+                  <div><dt>Context window</dt><dd id="contextWindow">Checking</dd></div>
+                  <div><dt>Active agent</dt><dd id="activeAgent">Default agent</dd></div>
+                </dl>
+              </div>
+
+              <div class="panel">
+                <div class="panel-title"><strong>Tools Available</strong></div>
+                <div class="tool-list">
+                  <div><span>File System</span><small>Read, write, search</small></div>
+                  <div><span>Shell</span><small>Execute commands</small></div>
+                  <div><span>Gateway</span><small>Status, usage, health</small></div>
+                  <div><span>Sessions</span><small>List recent work</small></div>
+                </div>
+                <button class="link-button wide-button" data-jump="settings">View local config</button>
+              </div>
+
+              <div class="panel">
+                <div class="panel-title"><strong>Quick Actions</strong></div>
+                <div class="quick-grid">
+                  <button data-action="start">Start</button>
+                  <button data-action="stop">Stop</button>
+                  <button data-action="restart">Restart</button>
+                  <button id="openControlUi">Control UI</button>
+                </div>
+              </div>
+
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="view-dashboard">
+          <div class="dashboard-page">
+            <div class="page-head dashboard-head">
+              <div>
+                <span class="eyebrow">Overview</span>
+                <h1>OpenClaw control center</h1>
+              </div>
+              <button class="small-button" id="refreshDashboard">Refresh</button>
+            </div>
+          <div class="page-grid">
+            <section class="dashboard-metrics">
+              <article class="metric-tile">
+                <span>Usage</span>
+                <strong id="dashboardUsage">--</strong>
+                <p id="dashboardUsageDetail">Checking token window</p>
+              </article>
+              <article class="metric-tile">
+                <span>Sessions</span>
+                <strong id="dashboardSessions">--</strong>
+                <p id="dashboardSessionsDetail">Recent session keys tracked locally.</p>
+              </article>
+              <article class="metric-tile">
+                <span>Skills</span>
+                <strong id="dashboardSkills">--</strong>
+                <p id="dashboardSkillsDetail">Checking skill registry</p>
+              </article>
+              <article class="metric-tile">
+                <span>Cron</span>
+                <strong id="dashboardCron">--</strong>
+                <p id="dashboardCronDetail">Checking scheduled jobs</p>
+              </article>
+              <article class="metric-tile">
+                <span>Model Auth</span>
+                <strong id="dashboardModelAuth">--</strong>
+                <p id="dashboardModelAuthDetail">Checking configured model</p>
+              </article>
+            </section>
+            <article class="card color-accent"><span>Gateway</span><strong id="dashboardGateway">Checking</strong><p id="dashboardEndpoint">Endpoint pending</p></article>
+            <article class="card color-coral"><span>Tasks</span><strong id="dashboardTasks">--</strong><p id="dashboardTaskDetail">From gateway health</p></article>
+            <article class="card color-yellow"><span>Channels</span><strong id="dashboardChannels">--</strong><p id="dashboardChannelDetail">Checking configured channels</p></article>
+            <article class="card wide nodes-card">
+              <div class="panel-title">
+                <div>
+                  <span>Detected Nodes</span>
+                  <p>Local gateway and connected OpenClaw backends.</p>
+                </div>
+                <strong id="nodeCount">--</strong>
+              </div>
+              <div id="presenceList" class="node-grid">Checking system presence...</div>
+            </article>
+          </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-agents">
+          <div class="page">
+            <div class="page-head">
+              <div><span class="eyebrow">Agents</span><h1>Your agents</h1></div>
+              <button class="small-button" id="refreshAgents">Refresh</button>
+            </div>
+            <div id="agentsList" class="agents-shell">Loading agents...</div>
+          </div>
+        </section>
+
+        <section class="view" id="view-sessions">
+          <div class="page">
+            <div class="page-head">
+              <div><span class="eyebrow">Sessions</span><h1>Recent OpenClaw work</h1></div>
+              <button class="small-button" id="refreshSessionsPage">Refresh</button>
+            </div>
+            <div id="sessionsPageList" class="data-list">Loading sessions...</div>
+          </div>
+        </section>
+
+        <section class="view" id="view-memory">
+          <div class="page">
+            <div class="page-head">
+              <div><span class="eyebrow">Memory</span><h1>Workspace files ClawDesk can see</h1></div>
+              <button class="small-button" id="openMemoryFolder">Open folder</button>
+            </div>
+            <div id="memoryList" class="data-list">Loading memory files...</div>
+          </div>
+        </section>
+
+        <section class="view" id="view-usage">
+          <div class="usage-page">
+            <div class="usage-header">
+              <div>
+                <span class="eyebrow">Usage</span>
+                <h1>Local OpenClaw usage estimate</h1>
+              </div>
+              <button class="small-button" id="refreshUsage">Refresh</button>
+            </div>
+            <p class="notice" id="usageNotice">Checking usage source...</p>
+            <div class="usage-grid">
+              <article class="metric"><span>Latest day</span><strong id="usageLatestCost">$--</strong><small id="usageLatestTokens">-- tokens</small></article>
+              <article class="metric"><span>30 days</span><strong id="usageTotalCost">$--</strong><small id="usageTotalTokens">-- tokens</small></article>
+              <article class="metric"><span>Missing entries</span><strong id="usageMissingEntries">--</strong><small>sessions without cost data</small></article>
+              <article class="metric"><span>Gateway health</span><strong id="usageHealth">--</strong><small id="usageHealthDetail">Checking</small></article>
+            </div>
+            <div class="table-card">
+              <div class="panel-title"><strong>Cost Summary</strong></div>
+              <table>
+                <thead><tr><th>Window</th><th>Tokens</th><th>Cost</th><th>Source</th></tr></thead>
+                <tbody>
+                  <tr><td id="usageLatestDay">Latest day</td><td id="usageTableLatestTokens">--</td><td id="usageTableLatestCost">$--</td><td>openclaw gateway usage-cost</td></tr>
+                  <tr><td>30 days</td><td id="usageTableTotalTokens">--</td><td id="usageTableTotalCost">$--</td><td id="usageTableMissing">Missing entries: --</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-crons">
+          <div class="page crons-page">
+            <div class="page-head">
+              <div><span class="eyebrow">Crons</span><h1>Scheduled OpenClaw jobs</h1></div>
+              <button class="small-button" id="refreshCrons">Refresh</button>
+            </div>
+            <div class="cron-summary-grid">
+              <article class="metric"><span>Total jobs</span><strong id="cronsTotal">--</strong><small>registered locally</small></article>
+              <article class="metric"><span>Enabled</span><strong id="cronsEnabled">--</strong><small>allowed to run</small></article>
+              <article class="metric"><span>Failed</span><strong id="cronsFailed">--</strong><small>needs attention</small></article>
+              <article class="metric"><span>Next run</span><strong id="cronsNextRun">--</strong><small id="cronsNextJob">Checking</small></article>
+            </div>
+            <div id="cronsList" class="cron-list">Loading cron jobs...</div>
+          </div>
+        </section>
+
+        <section class="view" id="view-logs">
+          <div class="page logs-page">
+            <div class="page-head">
+              <div><span class="eyebrow">Logs</span><h1>Gateway log tail</h1></div>
+              <button class="small-button" id="refreshLogs">Refresh</button>
+            </div>
+            <p id="logFilePath" class="muted">Log path pending</p>
+            <pre id="gatewayLogOutput">Loading gateway log...</pre>
+            <h2>Desktop activity</h2>
+            <pre id="logOutput"></pre>
+          </div>
+        </section>
+
+        <section class="view" id="view-settings">
+          <div class="page">
+            <div class="page-head">
+              <div><span class="eyebrow">Settings</span><h1>Local configuration</h1></div>
+              <button class="small-button" id="refreshSettings">Refresh</button>
+            </div>
+            <div class="settings-grid">
+              <article class="panel model-panel">
+                <div class="panel-title"><strong>Model</strong><span id="modelCurrentBadge">Checking</span></div>
+                <form class="model-form" id="modelForm">
+                  <label>
+                    <span>Configured model</span>
+                    <select id="modelSelect" aria-label="Configured model">
+                      <option>Loading models...</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Custom model ID</span>
+                    <input id="modelCustomInput" placeholder="provider/model" />
+                  </label>
+                  <button class="primary-button" id="saveModelButton" type="submit">Save model</button>
+                </form>
+                <p class="muted" id="modelSaveStatus">Changes apply to new OpenClaw runs. Restart the gateway if a running service keeps using the old model.</p>
+              </article>
+              <article class="panel"><div class="panel-title"><strong>OpenClaw</strong></div><dl id="settingsOpenClaw"></dl></article>
+              <article class="panel"><div class="panel-title"><strong>ClawDesk</strong></div><dl id="settingsApp"></dl></article>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-about">
+          <div class="page about-page">
+            <div class="page-head">
+              <div><span class="eyebrow">About</span><h1>ClawDesk</h1></div>
+              <button class="small-button" id="refreshAbout">Refresh</button>
+            </div>
+            <section class="about-hero panel">
+              <img class="about-logo" src="assets/clawdesk-logo.svg" alt="" />
+              <div>
+                <span class="eyebrow">Local desktop client</span>
+                <h2>OpenClaw control center for your own machine.</h2>
+                <p>ClawDesk gives local OpenClaw users a desktop surface for chat, gateway health, usage, sessions, memory, cron jobs, logs, and model configuration.</p>
+              </div>
+            </section>
+            <div class="about-grid">
+              <article class="panel">
+                <div class="panel-title"><strong>App</strong></div>
+                <dl>
+                  <div><dt>Version</dt><dd id="aboutVersion">Checking</dd></div>
+                  <div><dt>Platform</dt><dd id="aboutPlatform">Checking</dd></div>
+                  <div><dt>Architecture</dt><dd id="aboutArch">Checking</dd></div>
+                </dl>
+              </article>
+              <article class="panel">
+                <div class="panel-title"><strong>OpenClaw</strong></div>
+                <dl>
+                  <div><dt>CLI path</dt><dd id="aboutCliPath">Checking</dd></div>
+                  <div><dt>CLI version</dt><dd id="aboutCliVersion">Checking</dd></div>
+                  <div><dt>Gateway</dt><dd id="aboutGateway">Checking</dd></div>
+                </dl>
+              </article>
+              <article class="panel wide-panel">
+                <div class="panel-title"><strong>Workspace</strong></div>
+                <dl>
+                  <div><dt>Path</dt><dd id="aboutWorkspace">Checking</dd></div>
+                  <div><dt>Model</dt><dd id="aboutModel">Checking</dd></div>
+                </dl>
+              </article>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div class="modal-backdrop" id="renameSessionModal" hidden>
+      <form class="modal-card" id="renameSessionForm">
+        <div class="modal-head">
+          <div>
+            <span class="eyebrow">Session</span>
+            <h2>Rename session</h2>
+          </div>
+          <button class="link-button" id="cancelRenameSession" type="button">Cancel</button>
+        </div>
+        <label>
+          <span>Display name</span>
+          <input id="renameSessionInput" autocomplete="off" maxlength="80" placeholder="Example: GitHub release prep" />
+        </label>
+        <p class="muted" id="renameSessionKey">OpenClaw session key stays unchanged.</p>
+        <div class="modal-actions">
+          <button class="small-button" id="clearRenameSession" type="button">Clear name</button>
+          <button class="primary-button" type="submit">Save name</button>
+        </div>
+      </form>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

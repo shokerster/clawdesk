@@ -1,0 +1,66 @@
+{
+  "name": "clawdesk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Unofficial desktop companion for OpenClaw.",
+  "author": {
+    "name": "FredBuilds",
+    "email": "support@fredbuilds.co"
+  },
+  "homepage": "https://fredbuilds.co",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "electron-builder --mac dmg zip --universal",
+    "build:win": "electron-builder --win nsis portable --x64",
+    "build:linux": "electron-builder --linux AppImage tar.gz --x64"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "co.fredbuilds.clawdesk",
+    "productName": "ClawDesk",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "app.js",
+      "index.html",
+      "main.js",
+      "preload.js",
+      "styles.css",
+      "assets/clawdesk-logo.svg",
+      "assets/clawdesk-logo.png",
+      "assets/clawdesk-icon.icns",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/clawdesk-icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "linux": {
+      "category": "Utility",
+      "maintainer": "FredBuilds <support@fredbuilds.co>",
+      "icon": "assets/clawdesk-logo.png",
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ]
+    },
+    "dmg": {
+      "title": "ClawDesk"
+    }
+  }
+}
