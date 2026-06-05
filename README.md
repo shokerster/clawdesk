@@ -58,6 +58,12 @@ npm run build:linux
 
 Release files are written to `release/`.
 
+## Contributing
+
+Contributions are welcome. You may fork ClawDesk for the purpose of proposing
+changes back to the project. See [CONTRIBUTING.md](CONTRIBUTING.md) before
+opening an issue or pull request.
+
 ## Current Status
 
 This is a v0.1 local desktop build. It is useful for testing and early OpenClaw users, but it is not notarized, code-signed, or packaged with an OpenClaw installer.
@@ -71,4 +77,7 @@ Known limits:
 
 ## License
 
-All rights reserved. See [LICENSE](LICENSE).
+Source-available contribution license. You can view, evaluate, fork, and modify
+ClawDesk for contributions, but redistribution, resale, competing derivatives,
+and unofficial packaged builds are not allowed without written permission. See
+[LICENSE](LICENSE).

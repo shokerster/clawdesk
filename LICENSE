@@ -1,5 +1,60 @@
+ClawDesk Source-Available Contribution License
+
 Copyright (c) 2026 FredBuilds.
 
-All rights reserved.
+This license is designed to let people inspect ClawDesk and contribute improvements
+while keeping the product, brand, and packaged builds controlled by FredBuilds.
 
-This source code and the packaged ClawDesk builds are provided for viewing, evaluation, and authorized use only. No permission is granted to copy, modify, redistribute, sublicense, sell, or create derivative works from this project unless FredBuilds grants that permission in writing or replaces this notice with a separate license.
+1. Permission to view and evaluate
+
+You may view, download, and run this source code for personal evaluation,
+development, and testing.
+
+2. Permission to fork and contribute
+
+You may fork, clone, copy, and modify this repository only for the purpose of:
+
+- proposing changes back to the official ClawDesk project;
+- opening issues, pull requests, patches, or security reports;
+- testing changes needed for those proposed contributions.
+
+3. Contribution license
+
+By submitting a contribution to ClawDesk, you grant FredBuilds a perpetual,
+worldwide, non-exclusive, royalty-free, irrevocable license to use, reproduce,
+modify, publish, distribute, sublicense, and commercialize that contribution as
+part of ClawDesk or related FredBuilds products and services.
+
+You also confirm that you have the right to submit the contribution and that it
+does not knowingly include code or content that would prevent FredBuilds from
+using ClawDesk commercially.
+
+4. Restrictions
+
+Unless FredBuilds gives you separate written permission, you may not:
+
+- redistribute ClawDesk source code or packaged builds outside normal GitHub fork
+  and pull request workflows;
+- publish modified ClawDesk builds;
+- sell, rent, sublicense, host, or commercially offer ClawDesk or a derivative;
+- use the ClawDesk name, FredBuilds name, logos, trademarks, or branding for your
+  own product;
+- remove or hide copyright, license, or attribution notices;
+- use this source code to create or distribute a competing ClawDesk-like product.
+
+5. Third-party dependencies
+
+Third-party dependencies remain under their own licenses. This license only
+applies to FredBuilds-owned ClawDesk source code, assets, documentation, and
+packaged builds.
+
+6. No warranty
+
+ClawDesk is provided "as is", without warranty of any kind, express or implied.
+FredBuilds is not liable for damages or claims arising from use of this software.
+
+7. Separate permission
+
+FredBuilds may grant different permissions in writing, in a paid agreement, or in
+a future license file. If that happens, those written terms apply only to the
+people and versions they cover.
