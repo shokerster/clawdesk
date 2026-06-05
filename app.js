@@ -4,8 +4,10 @@ const logOutput = document.querySelector('#logOutput');
 const DEFAULT_SESSION_KEY = 'agent:main:clawdesk';
 const CHAT_STORAGE_PREFIX = 'clawdesk.chat.';
 const SESSION_ALIAS_STORAGE_KEY = 'clawdesk.session.aliases';
+const ACTIVE_SESSION_STORAGE_KEY = 'clawdesk.activeSessionKey';
 const THEME_STORAGE_KEY = 'clawdesk.theme';
 const SIDEBAR_STORAGE_KEY = 'clawdesk.sidebar.collapsed';
+const AUTO_ROTATE_CONTEXT_PCT = 65;
 
 let latestStatus = null;
 let latestHealth = null;
@@ -15,7 +17,7 @@ let latestAgents = null;
 let latestSessions = null;
 let latestSkills = null;
 let latestCron = null;
-let currentSessionKey = DEFAULT_SESSION_KEY;
+let currentSessionKey = localStorage.getItem(ACTIVE_SESSION_STORAGE_KEY) || DEFAULT_SESSION_KEY;
 let pendingRenameSessionKey = DEFAULT_SESSION_KEY;
 let pendingAttachments = [];
 
@@ -301,6 +303,27 @@ function sessionLabel(sessionKey) {
   return loadSessionAliases()[sessionKey] || sessionKey;
 }
 
+function generateClawDeskSessionKey() {
+  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  return `${DEFAULT_SESSION_KEY}:${stamp}`;
+}
+
+function isCompactionFailure(reply) {
+  const text = `${reply?.text || ''}\n${reply?.raw || ''}`;
+  return /CLI transcript compaction failed|Summarization failed|Connection error/i.test(text);
+}
+
+function findSessionByKey(sessions, key) {
+  return (sessions || []).find((session) => (session.key || session.sessionKey || session.id) === key);
+}
+
+function resetContextMeter(label = 'New session') {
+  const meter = $('#contextMeter');
+  if (meter) meter.style.width = '0%';
+  setText('#contextTokens', label);
+  setText('#contextWindow', 'Pending first reply');
+}
+
 function applySessionRename(sessionKey, label) {
   const key = sessionKey || currentSessionKey;
   const aliases = loadSessionAliases();
@@ -348,6 +371,7 @@ function introMessage(sessionKey = currentSessionKey) {
 
 function setActiveSession(sessionKey, { clear = false } = {}) {
   currentSessionKey = sessionKey || DEFAULT_SESSION_KEY;
+  localStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, currentSessionKey);
   const select = $('#conversationSelect');
   if (select) {
     const hasOption = [...select.options].some((option) => option.value === currentSessionKey);
@@ -369,6 +393,15 @@ function setActiveSession(sessionKey, { clear = false } = {}) {
   } else {
     loadChat();
   }
+}
+
+function startNewSession({ reason = '' } = {}) {
+  const nextSessionKey = generateClawDeskSessionKey();
+  setActiveSession(nextSessionKey, { clear: true });
+  resetContextMeter();
+  $('#chatInput')?.focus();
+  log(`Started new session ${currentSessionKey}${reason ? ` (${reason})` : ''}`);
+  return nextSessionKey;
 }
 
 function saveChat() {
@@ -715,7 +748,8 @@ function renderSessions(result = latestSessions) {
   $('#sessionsPageList')?.querySelectorAll('[data-rename-session]').forEach((button) => {
     button.addEventListener('click', () => openRenameSession(button.dataset.renameSession));
   });
-  const clawdeskSession = sessions.find((session) => session.key === 'agent:main:clawdesk') || sessions[0];
+  const selectedSession = findSessionByKey(sessions, currentSessionKey);
+  const clawdeskSession = selectedSession || (currentSessionKey === DEFAULT_SESSION_KEY ? findSessionByKey(sessions, DEFAULT_SESSION_KEY) : null) || (currentSessionKey === DEFAULT_SESSION_KEY ? sessions[0] : null);
   if (clawdeskSession) {
     const total = Number(clawdeskSession.totalTokens || 0);
     const windowTokens = Number(clawdeskSession.contextTokens || 272000);
@@ -723,6 +757,12 @@ function renderSessions(result = latestSessions) {
     $('#contextMeter').style.width = `${pct}%`;
     setText('#contextTokens', total ? `${total.toLocaleString()} tokens` : 'No token data');
     setText('#contextWindow', windowTokens ? `${windowTokens.toLocaleString()} tokens` : 'Unknown');
+
+    if ((clawdeskSession.key || clawdeskSession.sessionKey || clawdeskSession.id) === currentSessionKey && pct >= AUTO_ROTATE_CONTEXT_PCT) {
+      startNewSession({ reason: 'previous context was near full' });
+    }
+  } else {
+    resetContextMeter();
   }
 }
 
@@ -889,10 +929,7 @@ on('#renameSessionForm', 'submit', (event) => {
   closeRenameSession();
 });
 on('#newSessionButton', 'click', () => {
-  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
-  setActiveSession(`${DEFAULT_SESSION_KEY}:${stamp}`, { clear: true });
-  $('#chatInput')?.focus();
-  log(`Started new session ${currentSessionKey}`);
+  startNewSession();
 });
 
 on('#openControlUi', 'click', async () => {
@@ -960,13 +997,27 @@ $('#composer').addEventListener('submit', async (event) => {
   const pending = appendMessage('assistant', 'Working through OpenClaw...');
 
   try {
-    const reply = await window.clawdesk.sendMessage({
+    let reply = await window.clawdesk.sendMessage({
       message: outgoingText,
       attachments,
       sessionKey: currentSessionKey,
       agent: 'main',
       thinking
     });
+    if (!reply.ok && isCompactionFailure(reply)) {
+      const failedSessionKey = currentSessionKey;
+      const nextSessionKey = startNewSession({ reason: 'compaction failed' });
+      pending.querySelector('p').textContent = `Previous ClawDesk session was full, so I started ${nextSessionKey} and retried.`;
+      saveChat();
+      log(`Compaction failed in ${failedSessionKey}; retrying in ${nextSessionKey}`);
+      reply = await window.clawdesk.sendMessage({
+        message: outgoingText,
+        attachments,
+        sessionKey: nextSessionKey,
+        agent: 'main',
+        thinking
+      });
+    }
     pending.querySelector('p').textContent = reply.text;
     scrollChatToBottom();
     saveChat();
