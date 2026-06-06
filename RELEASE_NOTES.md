@@ -1,10 +1,10 @@
 # ClawDesk v0.1.1
 
-Attachment-enabled local desktop release for OpenClaw users.
+Attachment-enabled local desktop release for OpenClaw users. This build is verified on macOS; Windows and Linux artifacts remain internal-testing targets until platform QA is complete.
 
 ## Includes
 
-- Electron desktop app for macOS, Windows, and Linux.
+- Electron desktop app verified on macOS, with Windows and Linux build targets available for internal QA.
 - Local OpenClaw chat through `openclaw agent`.
 - Native chat file attachments: the `+` button opens a file picker, copies selected files into the OpenClaw workspace, and sends those paths to the agent.
 - Local session renaming for clearer conversation history.
@@ -26,6 +26,7 @@ Attachment-enabled local desktop release for OpenClaw users.
 ## Known Limits
 
 - Builds are unsigned and not notarized.
+- Public release readiness is macOS-first until Windows and Linux CLI discovery, install, and runtime behavior are verified on those platforms.
 - Windows builds currently use the default Electron icon.
 - Linux `.deb` is not included because macOS cross-build verification produced an invalid package stub.
 - Requires an existing local OpenClaw install.

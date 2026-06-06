@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ClawDesk</title>
     <link rel="stylesheet" href="styles.css" />
@@ -104,7 +105,7 @@
             <aside class="inspector">
               <div class="panel">
                 <div class="panel-title"><strong>Current Context</strong></div>
-                <div class="meter"><span id="contextMeter" style="width: 0%"></span></div>
+                <div class="meter"><span id="contextMeter"></span></div>
                 <dl>
                   <div><dt>Memory used</dt><dd id="contextTokens">Checking</dd></div>
                   <div><dt>Context window</dt><dd id="contextWindow">Checking</dd></div>

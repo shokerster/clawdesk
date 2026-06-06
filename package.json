@@ -11,13 +11,14 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "check:security": "node scripts/check-security.js",
     "build:mac": "electron-builder --mac dmg zip --universal",
     "build:win": "electron-builder --win nsis portable --x64",
     "build:linux": "electron-builder --linux AppImage tar.gz --x64"
   },
   "devDependencies": {
-    "electron": "^31.7.7",
-    "electron-builder": "^24.13.3"
+    "electron": "^42.3.3",
+    "electron-builder": "^26.15.0"
   },
   "build": {
     "appId": "co.fredbuilds.clawdesk",

@@ -2,7 +2,7 @@
 
 Desktop control center for a local OpenClaw install.
 
-ClawDesk gives OpenClaw users a cross-platform Electron app for chat, gateway health, usage, sessions, memory files, cron jobs, logs, model configuration, and local quick actions.
+ClawDesk gives OpenClaw users an Electron app for chat, gateway health, usage, sessions, memory files, cron jobs, logs, model configuration, and local quick actions.
 
 ![ClawDesk dashboard](docs/screenshots/dashboard.png)
 
@@ -21,17 +21,17 @@ ClawDesk gives OpenClaw users a cross-platform Electron app for chat, gateway he
 - Review local usage estimates from `openclaw gateway usage-cost`.
 - Change the default OpenClaw model from the Settings panel.
 - Start, stop, and restart the local Gateway.
-- Works on macOS, Windows, and Linux from one Electron codebase.
+- Built from one Electron codebase, currently verified on macOS. Windows and Linux artifacts are build targets that still need platform QA.
 
 ## Requirements
 
 - OpenClaw installed locally.
 - Node.js and npm for development builds.
-- macOS, Windows, or Linux.
+- macOS for the currently verified local workflow. Windows and Linux require platform-specific verification before public release.
 
 ## Install From Release
 
-Download the artifact for your platform from the GitHub release:
+Download the artifact for your platform from the GitHub release. The current build has been verified on macOS; Windows and Linux artifacts are for internal testing until platform QA is complete.
 
 - macOS: `ClawDesk-0.1.1-universal.dmg`
 - Windows installer: `ClawDesk.Setup.0.1.1.exe`
@@ -54,6 +54,7 @@ npm start
 npm run build:mac
 npm run build:win
 npm run build:linux
+npm run check:security
 ```
 
 Release files are written to `release/`.
@@ -70,6 +71,7 @@ This is a v0.1 local desktop build. It is useful for testing and early OpenClaw 
 
 Known limits:
 
+- Public-release readiness is macOS-first right now; Windows and Linux need installation, CLI discovery, and runtime QA on those platforms.
 - Windows builds currently use the default Electron icon.
 - Linux `.deb` is not shipped from macOS cross-builds; use AppImage or tar.gz.
 - Native approval queue UI is not wired yet.

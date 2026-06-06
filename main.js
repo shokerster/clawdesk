@@ -6,6 +6,9 @@ const path = require('node:path');
 
 const DEFAULT_GATEWAY_URL = 'http://127.0.0.1:18789';
 const DEFAULT_WORKSPACE_DIR = path.join(os.homedir(), '.openclaw', 'workspace');
+const MAX_AGENT_MESSAGE_LENGTH = 24000;
+const MAX_SESSION_KEY_LENGTH = 160;
+const MAX_AGENT_ID_LENGTH = 80;
 const CLI_PATH_PREFIXES = [
   '/opt/homebrew/opt/node@22/bin',
   '/opt/homebrew/bin',
@@ -151,6 +154,109 @@ function extractJson(text) {
   } catch {
     return null;
   }
+}
+
+function isLoopbackHttpUrl(value) {
+  let url;
+  try {
+    url = new URL(String(value || ''));
+  } catch {
+    return false;
+  }
+  return (url.protocol === 'http:' || url.protocol === 'https:')
+    && ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname);
+}
+
+function isAllowedAppUrl(value) {
+  let url;
+  try {
+    url = new URL(String(value || ''));
+  } catch {
+    return false;
+  }
+  return url.protocol === 'file:' && path.normalize(url.pathname) === path.join(__dirname, 'index.html');
+}
+
+async function realPathIfExists(targetPath) {
+  try {
+    return await fs.promises.realpath(targetPath);
+  } catch {
+    return '';
+  }
+}
+
+async function buildAllowedOpenPathRoots() {
+  const workspaceDir = await getWorkspaceDir();
+  const status = await getOpenClawStatus();
+  const roots = [
+    workspaceDir,
+    app.getPath('logs'),
+    app.getPath('userData'),
+    status.logPath ? path.dirname(status.logPath) : ''
+  ];
+  const resolved = [];
+  for (const root of roots.filter(Boolean)) {
+    const realRoot = await realPathIfExists(path.resolve(root));
+    if (realRoot) resolved.push(realRoot);
+  }
+  return [...new Set(resolved)];
+}
+
+function isPathInsideRoot(targetPath, rootPath) {
+  const relative = path.relative(rootPath, targetPath);
+  return relative === '' || (relative && !relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+async function openAllowedPath(targetPath) {
+  if (typeof targetPath !== 'string' || targetPath.length > 4096 || targetPath.includes('\0')) {
+    return { ok: false, error: 'Invalid path.' };
+  }
+  const resolvedTarget = path.resolve(targetPath);
+  const realTarget = await realPathIfExists(resolvedTarget);
+  if (!realTarget) return { ok: false, error: 'Path does not exist.' };
+
+  const roots = await buildAllowedOpenPathRoots();
+  if (!roots.some((root) => isPathInsideRoot(realTarget, root))) {
+    return { ok: false, error: 'Path is outside ClawDesk allowed locations.' };
+  }
+
+  const error = await shell.openPath(realTarget);
+  return error ? { ok: false, error } : { ok: true, path: realTarget };
+}
+
+function normalizeString(value, fallback, maxLength) {
+  const text = String(value || '').trim();
+  return text ? text.slice(0, maxLength) : fallback;
+}
+
+function normalizeSendMessagePayload(payload = {}) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { ok: false, error: 'Invalid message payload.' };
+  }
+  const message = normalizeString(payload.message, '', MAX_AGENT_MESSAGE_LENGTH);
+  if (!message) return { ok: false, error: 'Message is required.' };
+
+  const sessionKey = normalizeString(payload.sessionKey, 'agent:main:clawdesk', MAX_SESSION_KEY_LENGTH);
+  if (!/^[a-z0-9:_./-]+$/i.test(sessionKey)) {
+    return { ok: false, error: 'Invalid session key.' };
+  }
+
+  const agent = normalizeString(payload.agent, 'main', MAX_AGENT_ID_LENGTH);
+  if (!/^[a-z0-9_-]+$/i.test(agent)) {
+    return { ok: false, error: 'Invalid agent id.' };
+  }
+
+  const thinking = ['low', 'medium', 'high'].includes(payload.thinking) ? payload.thinking : 'low';
+  const attachments = Array.isArray(payload.attachments)
+    ? payload.attachments.slice(0, 10).map((attachment) => ({
+      ok: attachment?.ok !== false,
+      name: safeFileName(attachment?.name || path.basename(String(attachment?.path || 'attachment'))),
+      path: String(attachment?.path || '').slice(0, 4096),
+      size: Number.isFinite(Number(attachment?.size)) ? Number(attachment.size) : undefined
+    })).filter((attachment) => attachment.path && !attachment.path.includes('\0'))
+    : [];
+
+  return { ok: true, payload: { message, attachments, sessionKey, agent, thinking } };
 }
 
 function parseGatewayStatus(output) {
@@ -364,7 +470,10 @@ function formatAttachmentContext(attachments = []) {
   return `\n\nAttached files saved locally for this turn:\n${lines.join('\n')}\n\nUse the file paths above when you need to inspect the attachments.`;
 }
 
-async function sendAgentMessage({ message, attachments = [], sessionKey = 'agent:main:clawdesk', agent = 'main', thinking = 'low' }) {
+async function sendAgentMessage(rawPayload) {
+  const normalized = normalizeSendMessagePayload(rawPayload);
+  if (!normalized.ok) return { ok: false, text: normalized.error, raw: '' };
+  const { message, attachments, sessionKey, agent, thinking } = normalized.payload;
   const openclawPath = await resolveOpenClawPath();
   if (!openclawPath) {
     return { ok: false, text: 'OpenClaw is not installed or not on this Mac.', raw: '' };
@@ -493,7 +602,23 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false
+    }
+  });
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isLoopbackHttpUrl(url)) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!isAllowedAppUrl(url)) {
+      event.preventDefault();
     }
   });
 
@@ -514,15 +639,13 @@ app.whenReady().then(() => {
   ipcMain.handle('openclaw:send-message', async (_event, payload) => sendAgentMessage(payload));
   ipcMain.handle('openclaw:choose-attachments', async (event) => chooseChatAttachments(BrowserWindow.fromWebContents(event.sender)));
   ipcMain.handle('openclaw:sessions', listSessions);
-  ipcMain.handle('openclaw:open-path', async (_event, targetPath) => {
-    if (!targetPath) return { ok: false };
-    await shell.openPath(targetPath);
-    return { ok: true };
-  });
+  ipcMain.handle('openclaw:open-path', async (_event, targetPath) => openAllowedPath(targetPath));
   ipcMain.handle('openclaw:open-control-ui', async () => {
     const status = await getOpenClawStatus();
-    await shell.openExternal(status.gatewayUrl || DEFAULT_GATEWAY_URL);
-    return { ok: true };
+    const url = status.gatewayUrl || DEFAULT_GATEWAY_URL;
+    if (!isLoopbackHttpUrl(url)) return { ok: false, error: 'Refusing to open a non-local Gateway URL.' };
+    await shell.openExternal(url);
+    return { ok: true, url };
   });
   ipcMain.handle('openclaw:action', async (_event, action) => runGatewayAction(action));
   ipcMain.handle('app:system', async () => ({
