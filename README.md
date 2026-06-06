@@ -21,7 +21,7 @@ ClawDesk gives OpenClaw users an Electron app for chat, gateway health, usage, s
 - Review local usage estimates from `openclaw gateway usage-cost`.
 - Change the default OpenClaw model from the Settings panel.
 - Start, stop, and restart the local Gateway.
-- Built from one Electron codebase, currently verified on macOS. Windows and Linux artifacts are build targets that still need platform QA.
+- Built from one Electron codebase, currently verified on macOS. Windows and Linux are unverified internal QA build targets until tested on those platforms.
 
 ## Requirements
 
@@ -31,15 +31,23 @@ ClawDesk gives OpenClaw users an Electron app for chat, gateway health, usage, s
 
 ## Install From Release
 
-Download the artifact for your platform from the GitHub release. The current build has been verified on macOS; Windows and Linux artifacts are for internal testing until platform QA is complete.
+Download the macOS artifact from the GitHub release. The current public developer-preview build has been verified on macOS only; Windows and Linux are unverified internal QA targets until platform testing is complete.
 
-- macOS: `ClawDesk-0.1.1-universal.dmg`
-- Windows installer: `ClawDesk.Setup.0.1.1.exe`
-- Windows portable: `ClawDesk.0.1.1.exe`
-- Linux AppImage: `ClawDesk-0.1.1.AppImage`
-- Linux archive: `clawdesk-0.1.1.tar.gz`
+- macOS DMG: `ClawDesk-0.1.2-universal.dmg`
+- macOS ZIP: `ClawDesk-0.1.2-universal-mac.zip`
 
-The current builds are unsigned. macOS and Windows may show security warnings on first launch.
+The current macOS builds are unsigned and not notarized, so macOS will show a security warning on first launch.
+
+## How to Open on macOS
+
+ClawDesk is currently distributed as an unsigned developer-preview app. After downloading the DMG or ZIP from GitHub Releases:
+
+1. Open the DMG and drag ClawDesk into Applications, or unzip the ZIP and move `ClawDesk.app` into Applications.
+2. Open Finder, go to Applications, then Control-click or right-click `ClawDesk.app`.
+3. Choose Open.
+4. In the macOS warning dialog, choose Open again.
+
+If macOS still blocks the app, open System Settings, go to Privacy & Security, and use the Open Anyway prompt for ClawDesk.
 
 ## Run Locally
 
@@ -57,7 +65,18 @@ npm run build:linux
 npm run check:security
 ```
 
-Release files are written to `release/`.
+Release files are written to `release/`. Only macOS DMG/ZIP artifacts should be attached to the public developer-preview release until Windows and Linux have been tested on their target platforms.
+
+## Security Checks
+
+Run these before publishing a release:
+
+```bash
+npm run check:security
+npm audit
+```
+
+`npm run check:security` verifies the Electron hardening assumptions this app depends on: CSP is present, inline scripts and unsafe eval are blocked, renderer context isolation and sandboxing stay enabled, unexpected navigation/new windows are denied, exposed preload inputs are sanitized, local file opens go through an allowlist, and external URL opening is limited to loopback URLs.
 
 ## Contributing
 
@@ -71,7 +90,7 @@ This is a v0.1 local desktop build. It is useful for testing and early OpenClaw 
 
 Known limits:
 
-- Public-release readiness is macOS-first right now; Windows and Linux need installation, CLI discovery, and runtime QA on those platforms.
+- Public-release readiness is macOS-first right now; Windows and Linux are unverified internal QA targets until installation, CLI discovery, and runtime behavior are tested on those platforms.
 - Windows builds currently use the default Electron icon.
 - Linux `.deb` is not shipped from macOS cross-builds; use AppImage or tar.gz.
 - Native approval queue UI is not wired yet.
